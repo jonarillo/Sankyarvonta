@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sänkyarvonta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Inter", system-ui, sans-serif;
+        background: #f6f5fb;
+        color: #201e2a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 24px 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 3vw, 3rem);
+        margin: 0;
+      }
+
+      p.lead {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #4a4758;
+        max-width: 720px;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+      }
+
+      .card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 20px 50px rgba(32, 30, 42, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-weight: 500;
+        color: #353144;
+      }
+
+      input,
+      select {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #d9d7e7;
+        font-size: 1rem;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-weight: 600;
+        background: #6a5cff;
+        color: #ffffff;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(106, 92, 255, 0.2);
+      }
+
+      button.secondary {
+        background: #f2f0ff;
+        color: #4a38ff;
+      }
+
+      .person-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .person-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: start;
+        padding: 12px;
+        border-radius: 14px;
+        background: #f7f6ff;
+      }
+
+      .person-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        background: #ffffff;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        color: #5c586c;
+      }
+
+      .results {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .bed {
+        border-radius: 18px;
+        border: 1px solid #edeaf7;
+        background: #fbfaff;
+        padding: 16px;
+      }
+
+      .bed h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        color: #4a4758;
+      }
+
+      .name-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .name-tag {
+        background: #6a5cff;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .empty {
+        color: #7b7890;
+        font-size: 0.95rem;
+      }
+
+      .status {
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: #fff5e6;
+        color: #7a4c00;
+        font-size: 0.95rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      footer {
+        text-align: center;
+        color: #7b7890;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Sänkyarvonta</h1>
+        <p class="lead">
+          Valitse arvontaan osallistuvat henkilöt ja arvo ketkä nukkuvat kahdessa parisängyssä ja
+          kuka saa oman yhden hengen sängyn.
+        </p>
+      </header>
+      <div id="root"></div>
+      <footer>Arvonta on aina reilu - jokainen nimi sekoitetaan uudelleen.</footer>
+    </main>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+    <script type="text/babel">
+      const { useMemo, useState } = React;
+
+      const initialPeople = [
+        {
+          id: crypto.randomUUID(),
+          name: "Aino",
+          age: 26,
+          gender: "Nainen",
+          sexuality: "Hetero",
+          selected: true,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Elias",
+          age: 29,
+          gender: "Mies",
+          sexuality: "Bi",
+          selected: true,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Sofia",
+          age: 24,
+          gender: "Nainen",
+          sexuality: "Queer",
+          selected: true,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Leo",
+          age: 32,
+          gender: "Mies",
+          sexuality: "Hetero",
+          selected: false,
+        },
+      ];
+
+      const shuffle = (items) => {
+        const array = [...items];
+        for (let i = array.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      };
+
+      const bedLabels = ["Parisänky 1", "Parisänky 2", "Yhden hengen sänky"];
+
+      const defaultForm = {
+        name: "",
+        age: "",
+        gender: "Nainen",
+        sexuality: "Hetero",
+      };
+
+      const App = () => {
+        const [people, setPeople] = useState(initialPeople);
+        const [form, setForm] = useState(defaultForm);
+        const [draw, setDraw] = useState([]);
+        const [message, setMessage] = useState("");
+
+        const selectedPeople = useMemo(
+          () => people.filter((person) => person.selected),
+          [people]
+        );
+
+        const handleToggle = (id) => {
+          setPeople((prev) =>
+            prev.map((person) =>
+              person.id === id ? { ...person, selected: !person.selected } : person
+            )
+          );
+        };
+
+        const handleChange = (event) => {
+          const { name, value } = event.target;
+          setForm((prev) => ({ ...prev, [name]: value }));
+        };
+
+        const handleAdd = (event) => {
+          event.preventDefault();
+          if (!form.name.trim()) {
+            setMessage("Anna osallistujalle nimi ennen lisäämistä.");
+            return;
+          }
+          if (!form.age || Number.isNaN(Number(form.age))) {
+            setMessage("Iän pitää olla numero.");
+            return;
+          }
+
+          const newPerson = {
+            id: crypto.randomUUID(),
+            name: form.name.trim(),
+            age: Number(form.age),
+            gender: form.gender,
+            sexuality: form.sexuality,
+            selected: true,
+          };
+          setPeople((prev) => [newPerson, ...prev]);
+          setForm(defaultForm);
+          setMessage("");
+        };
+
+        const handleDraw = () => {
+          if (selectedPeople.length < 3) {
+            setMessage("Valitse vähintään 3 henkilöä, jotta sänkyarvonta onnistuu.");
+            setDraw([]);
+            return;
+          }
+
+          const shuffled = shuffle(selectedPeople);
+          const beds = [
+            [shuffled[0], shuffled[1]],
+            [shuffled[2], shuffled[3]],
+            [shuffled[4]],
+          ];
+
+          setDraw(beds);
+          setMessage("");
+        };
+
+        const handleReset = () => {
+          setDraw([]);
+          setMessage("");
+        };
+
+        return (
+          <div className="content">
+            <section className="card">
+              <h2>Osallistujat</h2>
+              <form onSubmit={handleAdd} className="person-list">
+                <label>
+                  Nimi
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Lisää osallistuja"
+                  />
+                </label>
+                <label>
+                  Ikä
+                  <input
+                    name="age"
+                    type="number"
+                    min="0"
+                    value={form.age}
+                    onChange={handleChange}
+                    placeholder="Esim. 28"
+                  />
+                </label>
+                <label>
+                  Sukupuoli
+                  <select name="gender" value={form.gender} onChange={handleChange}>
+                    <option value="Nainen">Nainen</option>
+                    <option value="Mies">Mies</option>
+                    <option value="Ei-binäärinen">Ei-binäärinen</option>
+                    <option value="Muu">Muu</option>
+                  </select>
+                </label>
+                <label>
+                  Seksuaalisuus
+                  <select name="sexuality" value={form.sexuality} onChange={handleChange}>
+                    <option value="Hetero">Hetero</option>
+                    <option value="Homo">Homo</option>
+                    <option value="Bi">Bi</option>
+                    <option value="Pan">Pan</option>
+                    <option value="Queer">Queer</option>
+                    <option value="Aseksuaali">Aseksuaali</option>
+                  </select>
+                </label>
+                <button type="submit">Lisää henkilö</button>
+              </form>
+            </section>
+
+            <section className="card">
+              <h2>Valitse arvontaan</h2>
+              <div className="person-list">
+                {people.map((person) => (
+                  <div className="person-item" key={person.id}>
+                    <input
+                      type="checkbox"
+                      checked={person.selected}
+                      onChange={() => handleToggle(person.id)}
+                      aria-label={`Valitse ${person.name}`}
+                    />
+                    <div className="person-meta">
+                      <strong>{person.name}</strong>
+                      <div className="pill-row">
+                        <span className="pill">Ikä: {person.age}</span>
+                        <span className="pill">{person.gender}</span>
+                        <span className="pill">{person.sexuality}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!people.length && <div className="empty">Lisää vähintään yksi henkilö.</div>}
+              </div>
+            </section>
+
+            <section className="card">
+              <h2>Arvontatulokset</h2>
+              <div className="actions">
+                <button onClick={handleDraw}>Arvo sängyt</button>
+                <button className="secondary" onClick={handleReset} type="button">
+                  Tyhjennä tulos
+                </button>
+              </div>
+              {message && <div className="status">{message}</div>}
+              <div className="results">
+                {bedLabels.map((label, index) => (
+                  <div className="bed" key={label}>
+                    <h3>{label}</h3>
+                    <div className="name-row">
+                      {draw[index]?.length ? (
+                        draw[index].map((person) => (
+                          <span className="name-tag" key={person.id}>
+                            {person.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="empty">Ei arvottu vielä.</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
